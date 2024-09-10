@@ -22,33 +22,26 @@ class MultiStockAnalyzer:
         for ticker in self.tickers:
             try:
                 analyzer = StockAnalyzer(ticker)
-
                 if metric_set == "First":
-                    # First set of metrics with the new ones added
+                    # First set of metrics with added Industry
                     metrics = {
                         'Ticker': ticker,
                         'Industry': analyzer.calculator.get_industry(),
-                        'Revenue Growth (YoY)': round(analyzer.calculator.calculate_revenue_growth('yoy') or 0, 4),
-                        'Revenue Growth (QoQ)': round(analyzer.calculator.calculate_revenue_growth('qoq') or 0, 4),
-                        'EPS Growth (YoY)': round(analyzer.calculator.calculate_eps_growth('yoy') or 0, 4),
-                        'EPS Growth (QoQ)': round(analyzer.calculator.calculate_eps_growth('qoq') or 0, 4),
-                        'FCF Growth (YoY)': round(analyzer.calculator.calculate_fcf_growth('yoy') or 0, 4),
-                        'FCF Growth (QoQ)': round(analyzer.calculator.calculate_fcf_growth('qoq') or 0, 4),
-                        'Gross Profit Margin': round(analyzer.calculator.calculate_gross_profit_margin() or 0, 4),
-                        'Operating Profit Margin': round(analyzer.calculator.calculate_operating_profit_margin() or 0, 4),
-                        'Net Profit Margin': round(analyzer.calculator.calculate_net_profit_margin() or 0, 4),
-                        'Return on Invested Capital (ROIC)': round(analyzer.calculator.calculate_roic() or 0, 4),
-                        'Debt-to-Equity (D/E) Ratio': round(analyzer.calculator.calculate_de_ratio() or 0, 4),
-                        'Current Ratio': round(analyzer.calculator.calculate_current_ratio() or 0, 4),
-                        'Quick Ratio': round(analyzer.calculator.calculate_quick_ratio() or 0, 4),
-                        'Price-to-Free Cash Flow (P/FCF)': round(analyzer.calculator.calculate_pfcf() or 0, 4),
-                        'PEG Ratio': round(analyzer.calculator.calculate_peg_ratio() or 0, 4),
+                        'DE Ratio': round(analyzer.calculator.calculate_de_ratio() or 0, 4),
+                        'ROE': round(analyzer.calculator.calculate_roe() or 0, 4),
+                        'Earnings Yield': round(analyzer.calculator.calculate_earnings_yield() or 0, 4),
                         'Dividend Yield': round(analyzer.calculator.calculate_dividend_yield() or 0, 4),
-                        'Payout Ratio': round(analyzer.calculator.calculate_payout_ratio() or 0, 4),
-                        'Beta (Volatility)': round(analyzer.calculator.get_beta() or 0, 4),
-                        'Institutional Ownership': round(analyzer.calculator.get_institutional_ownership() or 0, 4),
-                        'Insider Buying/Selling': round(analyzer.calculator.get_insider_transactions() or 0, 4),
-                        'Asset Turnover Ratio': round(analyzer.calculator.calculate_asset_turnover_ratio() or 0, 4),
+                        'Current Ratio': round(analyzer.calculator.calculate_current_ratio() or 0, 4),
+                        'PE to Growth': round(analyzer.calculator.calculate_pe_to_growth() or 0, 4),
+                        'Price to Book': round(analyzer.calculator.calculate_price_to_book() or 0, 4),
+                        'Current Liabilities': self.format_large_numbers(analyzer.calculator.get_current_liabilities()),
+                        'Total Liabilities': self.format_large_numbers(analyzer.calculator.get_total_liabilities()),
+                        'Current Assets': self.format_large_numbers(analyzer.calculator.get_current_assets()),
+                        'Total Stockholder Equity': self.format_large_numbers(analyzer.calculator.get_total_stockholder_equity()),
+                        'Total Shares Outstanding': analyzer.calculator.get_total_shares_outstanding(),
+                        'Book Value Per Share': round(analyzer.calculator.calculate_book_value_per_share() or 0, 4),
+                        'Price to Sales (P/S)': round(analyzer.calculator.calculate_price_to_sales() or 0, 4),  # P/S ratio
+                        'EV/EBITDA': round(analyzer.calculator.calculate_ev_to_ebitda() or 0, 4),  # EV/EBITDA ratio
                     }
                 else:
                     # Default set of metrics (previously implemented)
