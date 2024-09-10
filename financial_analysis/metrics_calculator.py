@@ -23,6 +23,13 @@ class MetricsCalculator:
                     return self.financials.loc[key].iloc[0]
         return None
 
+    def _get_cashflow_value(self, keys):
+        for key in keys:
+            if key in self.cashflow.index:
+                if not self.cashflow.loc[key].empty:
+                    return self.cashflow.loc[key].iloc[0]
+        return None
+
     # Industry, Sector, Short Name retrieval
     def get_industry(self):
         return self.info.get('industry', None)
@@ -103,11 +110,23 @@ class MetricsCalculator:
             return None
         return enterprise_value / ebitda
 
+    # Calculate Free Cash Flow (FCF)
+    def calculate_free_cash_flow(self):
+        """Calculate Free Cash Flow (Operating Cash Flow - Capital Expenditure)."""
+        operating_cash_flow = self._get_cashflow_value(['Operating Cash Flow'])
+        capital_expenditures = self._get_cashflow_value(['Capital Expenditure'])
+
+        if operating_cash_flow is None or capital_expenditures is None:
+            return None
+        return operating_cash_flow - capital_expenditures
+
     # Price to Free Cash Flow (P/FCF) using Market Cap and Free Cash Flow
     def calculate_price_to_free_cash_flow(self):
+        """Calculate Price-to-Free Cash Flow (P/FCF) ratio."""
         market_cap = self.info.get('marketCap', None)
-        free_cash_flow = self._get_financials_value(['Free Cash Flow'])
-        if market_cap is None or free_cash_flow is None:
+        free_cash_flow = self.calculate_free_cash_flow()
+
+        if market_cap is None or free_cash_flow is None or free_cash_flow == 0:
             return None
         return market_cap / free_cash_flow
 

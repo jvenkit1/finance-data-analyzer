@@ -37,12 +37,19 @@ class MultiStockAnalyzer:
                         'Price to Book': round(analyzer.calculator.calculate_price_to_book() or 0, 4),
                         'Price to Sales (P/S)': round(analyzer.calculator.calculate_price_to_sales() or 0, 4),
                         'EV/EBITDA': round(analyzer.calculator.calculate_ev_to_ebitda() or 0, 4),
+                        'Price to Free Cash Flow': round(analyzer.calculator.calculate_price_to_free_cash_flow() or 0, 4),
                         'Curr Liabilities': self.format_large_numbers(analyzer.calculator.get_current_liabilities()),
                         'Total Liabilities': self.format_large_numbers(analyzer.calculator.get_total_liabilities()),
                         'Curr Assets': self.format_large_numbers(analyzer.calculator.get_current_assets()),
                         'Total Stockholder Equity': self.format_large_numbers(analyzer.calculator.get_total_stockholder_equity()),
                         'Total Shares Outstanding': analyzer.calculator.get_total_shares_outstanding(),
-                        'Book Value Per Share': round(analyzer.calculator.calculate_book_value_per_share() or 0, 4)
+                        'Book Value Per Share': round(analyzer.calculator.calculate_book_value_per_share() or 0, 4),
+                        'Payout Ratio': round(analyzer.calculator.calculate_payout_ratio() or 0, 4),
+                        'Beta (Volatility)': round(analyzer.calculator.get_beta() or 0, 4),
+                        'Institutional Ownership': round(analyzer.calculator.get_institutional_ownership() or 0, 4),
+                        'Insider Buying/Selling': round(analyzer.calculator.get_insider_transactions() or 0, 4),
+                        'Asset Turnover Ratio': round(analyzer.calculator.calculate_asset_turnover_ratio() or 0, 4),
+                        'Free Cash Flow': round(analyzer.calculator.calculate_free_cash_flow() or 0, 4)
                     }
                 else:
                     # Default set of metrics
