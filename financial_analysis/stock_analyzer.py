@@ -1,4 +1,5 @@
 from .metrics_calculator import MetricsCalculator
+import logging
 
 
 class StockAnalyzer:
@@ -14,62 +15,130 @@ class StockAnalyzer:
     def get_metrics(self):
         """
         Calculate and return the metrics for a stock ticker.
-        This method returns a dictionary of financial metrics based on the data provided.
+        This method returns a dictionary of financial metrics based on the data provided,
+        handling cases where certain metrics may be missing.
         """
         try:
-            return {
+            metrics = {
                 "Ticker": self.ticker,
-                "Short Name": self.calculator.get_short_name(),
-                "Sector": self.calculator.get_sector(),
-                "Industry": self.calculator.get_industry(),
-                "Revenue": self.calculator.get_revenue(),
-                "Operating Income": self.calculator.get_operating_income(),
-                "Interest Expense": self.calculator.get_interest_expense(),
-                "Book Value of Equity": self.calculator.get_book_value_of_equity(),
-                "Total Liabilities": self.calculator.get_total_liabilities(),
-                "Effective Tax Rate": self.calculator.calculate_effective_tax_rate(),
-                "R&D Expense": self.calculator.get_rnd_expense(),
-                "Stock Price": round(self.calculator.get_stock_price() or 0, 4),
-                "PE Ratio": round(self.calculator.calculate_pe_ratio() or 0, 4),
-                "EPS": round(self.calculator.get_eps() or 0, 4),
-                "DE Ratio": round(self.calculator.calculate_de_ratio() or 0, 4),
-                "ROE": round(self.calculator.calculate_roe() or 0, 4),
-                "Earnings Yield": round(
-                    self.calculator.calculate_earnings_yield() or 0, 4
+                "Book Value of Equity": (
+                    self.calculator.get_book_value_of_equity()
+                    if self.calculator.get_book_value_of_equity()
+                    else "N/A"
                 ),
-                "Dividend Yield": round(
-                    self.calculator.calculate_dividend_yield() or 0, 4
+                "Revenue": (
+                    self.calculator.get_revenue()
+                    if self.calculator.get_revenue()
+                    else "N/A"
                 ),
-                "Current Ratio": round(
-                    self.calculator.calculate_current_ratio() or 0, 4
+                "Operating Income": (
+                    self.calculator.get_operating_income()
+                    if self.calculator.get_operating_income()
+                    else "N/A"
                 ),
-                "PE to Growth": round(self.calculator.calculate_pe_to_growth() or 0, 4),
-                "Price to Book": round(
-                    self.calculator.calculate_price_to_book() or 0, 4
+                "Interest Expense": (
+                    self.calculator.get_interest_expense()
+                    if self.calculator.get_interest_expense()
+                    else "N/A"
                 ),
-                "Price to Sales (P/S)": round(
-                    self.calculator.calculate_price_to_sales() or 0, 4
+                "EPS": (
+                    self.calculator.get_eps() if self.calculator.get_eps() else "N/A"
                 ),
-                "EV/EBITDA": round(self.calculator.calculate_ev_to_ebitda() or 0, 4),
-                "Price to Free Cash Flow": round(
-                    self.calculator.calculate_price_to_free_cash_flow() or 0, 4
+                "PE Ratio": (
+                    self.calculator.calculate_pe_ratio()
+                    if self.calculator.calculate_pe_ratio()
+                    else "N/A"
                 ),
-                "Total Shares Outstanding": self.calculator.get_total_shares_outstanding(),
-                "Book Value Per Share": round(
-                    self.calculator.calculate_book_value_per_share() or 0, 4
+                "Total Liabilities": (
+                    self.calculator.get_total_liabilities()
+                    if self.calculator.get_total_liabilities()
+                    else "N/A"
                 ),
-                "Payout Ratio": round(self.calculator.calculate_payout_ratio() or 0, 4),
-                "Beta (Volatility)": round(self.calculator.get_beta() or 0, 4),
-                "Institutional Ownership": round(
-                    self.calculator.get_institutional_ownership() or 0, 4
+                "Current Liabilities": (
+                    self.calculator.get_current_liabilities()
+                    if self.calculator.get_current_liabilities()
+                    else "N/A"
                 ),
-                "Insider Buying/Selling": round(
-                    self.calculator.get_insider_transactions() or 0, 4
+                "Total Assets": (
+                    self.calculator._get_balance_sheet_value(["Total Assets"])
+                    if self.calculator._get_balance_sheet_value(["Total Assets"])
+                    else "N/A"
                 ),
-                "Asset Turnover Ratio": round(
-                    self.calculator.calculate_asset_turnover_ratio() or 0, 4
+                "Current Ratio": (
+                    self.calculator.calculate_current_ratio()
+                    if self.calculator.calculate_current_ratio()
+                    else "N/A"
+                ),
+                "ROE": (
+                    self.calculator.calculate_roe()
+                    if self.calculator.calculate_roe()
+                    else "N/A"
+                ),
+                "Earnings Yield": (
+                    self.calculator.calculate_earnings_yield()
+                    if self.calculator.calculate_earnings_yield()
+                    else "N/A"
+                ),
+                "Dividend Yield": (
+                    self.calculator.calculate_dividend_yield()
+                    if self.calculator.calculate_dividend_yield()
+                    else "N/A"
+                ),
+                "Price to Free Cash Flow": (
+                    self.calculator.calculate_price_to_free_cash_flow()
+                    if self.calculator.calculate_price_to_free_cash_flow()
+                    else "N/A"
+                ),
+                "EV/EBITDA": (
+                    self.calculator.calculate_ev_to_ebitda()
+                    if self.calculator.calculate_ev_to_ebitda()
+                    else "N/A"
+                ),
+                "Price to Book": (
+                    self.calculator.calculate_price_to_book()
+                    if self.calculator.calculate_price_to_book()
+                    else "N/A"
+                ),
+                "PE to Growth": (
+                    self.calculator.calculate_pe_to_growth()
+                    if self.calculator.calculate_pe_to_growth()
+                    else "N/A"
+                ),
+                "Total Shares Outstanding": (
+                    self.calculator.get_total_shares_outstanding()
+                    if self.calculator.get_total_shares_outstanding()
+                    else "N/A"
+                ),
+                "Payout Ratio": (
+                    self.calculator.calculate_payout_ratio()
+                    if self.calculator.calculate_payout_ratio()
+                    else "N/A"
+                ),
+                "Beta (Volatility)": (
+                    self.calculator.get_beta() if self.calculator.get_beta() else "N/A"
+                ),
+                "Institutional Ownership": (
+                    self.calculator.get_institutional_ownership()
+                    if self.calculator.get_institutional_ownership()
+                    else "N/A"
+                ),
+                "Insider Transactions": (
+                    self.calculator.get_insider_transactions()
+                    if self.calculator.get_insider_transactions()
+                    else "N/A"
+                ),
+                "Asset Turnover Ratio": (
+                    self.calculator.calculate_asset_turnover_ratio()
+                    if self.calculator.calculate_asset_turnover_ratio()
+                    else "N/A"
                 ),
             }
+
+            # Optional: You can filter out N/A values from the metrics
+            filtered_metrics = {k: v for k, v in metrics.items() if v != "N/A"}
+
+            return filtered_metrics
+
         except Exception as e:
-            print(f"Error in calculating metrics for {self.ticker}: {e}")
+            logging.error(f"Error in calculating metrics for {self.ticker}: {e}")
             return {"Ticker": self.ticker, "Error": str(e)}
