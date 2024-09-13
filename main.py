@@ -1,10 +1,51 @@
+import logging
 from financial_analysis.multi_stock_analyzer import MultiStockAnalyzer
 
-if __name__ == "__main__":
-    tickers = ["AAPL", "ADBE", "AMZN", "BRK.B", "COST", "TGT", "WMT", "GOOGL", "META", "MSFT", "NFLX", "NVDA", "TSLA", "UBER", "LYFT", "TSM", "INTC", "DLTR", "OLLI", "DG"]  
 
+def setup_logging():
+    """Configure logging to write to stdout."""
+    logging.basicConfig(
+        level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+
+
+def main():
+    # Set up logging
+    setup_logging()
+
+    # List of stock tickers to analyze
+    tickers = [
+        "AAPL",
+        "ADBE",
+        "AMZN",
+        "BRK.B",
+        "COST",
+        "TGT",
+        "WMT",
+        "GOOGL",
+        "META",
+        "MSFT",
+        "NFLX",
+        "NVDA",
+        "TSLA",
+        "UBER",
+        "LYFT",
+        "TSM",
+        "INTC",
+        "DLTR",
+        "OLLI",
+        "DG",
+    ]
+
+    # Initialize the MultiStockAnalyzer with the tickers
     analyzer = MultiStockAnalyzer(tickers)
-    result_df = analyzer.analyze_stocks("First")
 
-    print(result_df)
-    result_df.to_csv("stock_analysis.csv", index=False)
+    # Analyze the stocks and return the results
+    results_df = analyzer.analyze_stocks()
+
+    # Print out the results
+    print(results_df)
+
+
+if __name__ == "__main__":
+    main()
