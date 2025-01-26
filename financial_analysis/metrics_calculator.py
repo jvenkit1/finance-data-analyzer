@@ -1,4 +1,15 @@
+from dataclasses import dataclass
+from typing import Optional, List, Union, Dict, Any
 import pandas as pd
+from .utils import handle_api_errors
+
+
+@dataclass
+class FinancialData:
+    balance_sheet: pd.DataFrame
+    financials: pd.DataFrame
+    cashflow: pd.DataFrame
+    info: Dict[str, Any]
 
 
 class MetricsCalculator:
@@ -8,253 +19,266 @@ class MetricsCalculator:
         financials: pd.DataFrame,
         cashflow: pd.DataFrame,
         info: dict,
-    ):
-        """
-        Initialize the MetricsCalculator with balance sheet, financials, cashflow, and info.
-        These data sources are assumed to be pre-fetched and passed into the constructor.
-        """
-        self.balance_sheet = balance_sheet
-        self.financials = financials
-        self.cashflow = cashflow
-        self.info = info
+    ) -> None:
+        self.data = FinancialData(balance_sheet, financials, cashflow, info)
 
-        # Cache values to avoid repeated calculations
-        self._cached_values = {}
-
-    def _get_balance_sheet_value(self, keys):
-        """
-        Helper method to retrieve balance sheet values using multiple possible keys.
-        """
-        for key in keys:
-            if key in self.balance_sheet.index:
-                if not self.balance_sheet.loc[key].empty:
-                    return self.balance_sheet.loc[key].iloc[0]
-        return None
-
-    def _get_financials_value(self, keys):
-        """
-        Helper method to retrieve financial values using multiple possible keys.
-        """
-        for key in keys:
-            if key in self.financials.index:
-                if not self.financials.loc[key].empty:
-                    return self.financials.loc[key].iloc[0]
-        return None
-
-    def _get_cashflow_value(self, keys):
-        """
-        Helper method to retrieve cash flow values using multiple possible keys.
-        """
-        for key in keys:
-            if key in self.cashflow.index:
-                if not self.cashflow.loc[key].empty:
-                    return self.cashflow.loc[key].iloc[0]
-        return None
-
-    def get_industry(self):
-        """Retrieve the industry from the info dictionary."""
-        return self.info.get("industry", None)
-
-    def get_sector(self):
-        """Retrieve the sector from the info dictionary."""
-        return self.info.get("sector", None)
-
-    def get_short_name(self):
-        """Retrieve the short name from the info dictionary."""
-        return self.info.get("shortName", None)
-
-    def get_stock_price(self):
-        """Retrieve the current stock price from the info dictionary."""
-        return self.info.get("currentPrice", None)
-
-    def calculate_pe_ratio(self):
-        """Calculate the Price-to-Earnings (PE) ratio from the info dictionary."""
-        return self.info.get("trailingPE", None)
-
-    def get_eps(self):
-        """Retrieve the Earnings per Share (EPS) from the info dictionary."""
-        return self.info.get("trailingEps", None)
-
-    def calculate_de_ratio(self):
-        """Calculate the Debt-to-Equity (DE) ratio using Total Liabilities and Common Stock Equity."""
-        total_liabilities = self._get_balance_sheet_value(
-            ["Total Liabilities Net Minority Interest", "Total Liabilities"]
-        )
-        total_stockholder_equity = self._get_balance_sheet_value(
-            ["Common Stock Equity", "Stockholders Equity"]
-        )
-        if total_liabilities is None or total_stockholder_equity is None:
-            return None
-        return total_liabilities / total_stockholder_equity
-
-    def calculate_roe(self):
-        """Calculate the Return on Equity (ROE) using Net Income and Stockholder Equity."""
-        net_income = self._get_financials_value(["Net Income"])
-        total_stockholder_equity = self._get_balance_sheet_value(
-            ["Common Stock Equity", "Stockholders Equity"]
-        )
-        if net_income is None or total_stockholder_equity is None:
-            return None
-        return net_income / total_stockholder_equity
-
-    def calculate_earnings_yield(self):
-        """Calculate the Earnings Yield using Net Income and Market Cap."""
-        net_income = self._get_financials_value(["Net Income"])
-        market_cap = self.info.get("marketCap", None)
-        if net_income is None or market_cap is None:
-            return None
-        return net_income / market_cap
-
-    def calculate_dividend_yield(self):
-        """Calculate the Dividend Yield from the info dictionary."""
-        return self.info.get("dividendYield", None)
-
-    def calculate_current_ratio(self):
-        """Calculate the Current Ratio using Total Current Assets and Total Current Liabilities."""
-        current_assets = self._get_balance_sheet_value(["Current Assets"])
-        current_liabilities = self._get_balance_sheet_value(["Current Liabilities"])
-        if current_assets is None or current_liabilities is None:
-            return None
-        return current_assets / current_liabilities
-
-    def calculate_pe_to_growth(self):
-        """Retrieve the PEG Ratio from the info dictionary."""
-        return self.info.get("pegRatio", None)
-
-    def calculate_price_to_book(self):
-        """Retrieve the Price-to-Book Ratio from the info dictionary."""
-        return self.info.get("priceToBook", None)
-
-    def calculate_price_to_sales(self):
-        """Calculate the Price-to-Sales (P/S) ratio using Market Cap and Revenue."""
-        market_cap = self.info.get("marketCap", None)
-        revenue = self.get_revenue()
-        if market_cap is None or revenue is None:
-            return None
-        return market_cap / revenue
-
-    def calculate_ev_to_ebitda(self):
-        """Calculate the EV/EBITDA ratio using Enterprise Value and EBITDA."""
-        enterprise_value = self.info.get("enterpriseValue", None)
-        ebitda = self._get_financials_value(["EBITDA"])
-        if enterprise_value is None or ebitda is None:
-            return None
-        return enterprise_value / ebitda
-
-    def calculate_free_cash_flow(self):
-        """Calculate Free Cash Flow (Operating Cash Flow - Capital Expenditure)."""
-        operating_cash_flow = self._get_cashflow_value(["Operating Cash Flow"])
-        capital_expenditures = self._get_cashflow_value(["Capital Expenditure"])
-        if operating_cash_flow is None or capital_expenditures is None:
-            return None
-        return operating_cash_flow - capital_expenditures
-
-    def calculate_price_to_free_cash_flow(self):
-        """Calculate Price-to-Free Cash Flow (P/FCF) ratio using Market Cap and Free Cash Flow."""
-        market_cap = self.info.get("marketCap", None)
-        free_cash_flow = self.calculate_free_cash_flow()
-        if market_cap is None or free_cash_flow is None or free_cash_flow == 0:
-            return None
-        return market_cap / free_cash_flow
-
-    def get_current_liabilities(self):
-        """Retrieve Current Liabilities from the balance sheet."""
-        return self._get_balance_sheet_value(["Current Liabilities"])
-
-    def get_total_liabilities(self):
-        """Retrieve Total Liabilities from the balance sheet."""
-        return self._get_balance_sheet_value(
-            ["Total Liabilities Net Minority Interest", "Total Liabilities"]
+    def _get_value(
+        self, source: pd.DataFrame, keys: List[str]
+    ) -> Optional[Union[float, int]]:
+        return next(
+            (
+                source.loc[key].iloc[0]
+                for key in keys
+                if key in source.index and not source.loc[key].empty
+            ),
+            None,
         )
 
-    def get_current_assets(self):
-        """Retrieve Current Assets from the balance sheet."""
-        return self._get_balance_sheet_value(["Current Assets"])
+    def _get_info_value(self, key: str) -> Optional[Union[float, int, str]]:
+        return self.data.info.get(key)
 
-    def get_total_stockholder_equity(self):
-        """Retrieve Total Stockholder Equity from the balance sheet."""
-        return self._get_balance_sheet_value(
-            ["Common Stock Equity", "Stockholders Equity"]
-        )
+    @handle_api_errors
+    def _get_balance_sheet_value(self, keys: List[str]) -> Optional[float]:
+        return self._get_value(self.data.balance_sheet, keys)
 
-    def get_total_shares_outstanding(self):
-        """Retrieve Total Shares Outstanding from the info dictionary."""
-        shares_outstanding = self.info.get("sharesOutstanding", None)
-        if shares_outstanding is not None:
-            return f"{shares_outstanding:,.0f}"  # Format with commas and no decimals
-        return None
+    @handle_api_errors
+    def _get_financials_value(self, keys: List[str]) -> Optional[float]:
+        return self._get_value(self.data.financials, keys)
 
-    def get_book_value_of_equity(self):
-        """
-        Calculate the Book Value of Equity (Total Stockholder Equity / Total Shares Outstanding).
-        """
-        total_stockholder_equity = self.get_total_stockholder_equity()
-        total_shares_outstanding = self.get_total_shares_outstanding()
+    @handle_api_errors
+    def _get_cashflow_value(self, keys: List[str]) -> Optional[float]:
+        return self._get_value(self.data.cashflow, keys)
 
-        if total_stockholder_equity is None or total_shares_outstanding is None:
-            return None
+    # Basic Financial Data
+    def get_industry(self) -> Optional[str]:
+        return self._get_info_value("industry")
 
-        # Ensure total_shares_outstanding is numeric
-        total_shares = (
-            float(total_shares_outstanding.replace(",", ""))
-            if isinstance(total_shares_outstanding, str)
-            else total_shares_outstanding
-        )
+    def get_sector(self) -> Optional[str]:
+        return self._get_info_value("sector")
 
-        return total_stockholder_equity / total_shares if total_shares > 0 else None
+    def get_short_name(self) -> Optional[str]:
+        return self._get_info_value("shortName")
 
-    def calculate_book_value_per_share(self):
-        """Calculate the Book Value Per Share."""
-        stockholder_equity = self.get_total_stockholder_equity()
-        shares_outstanding = self.get_total_shares_outstanding()
-        if stockholder_equity is None or shares_outstanding is None:
-            return None
-        return stockholder_equity / float(shares_outstanding.replace(",", ""))
+    def get_stock_price(self) -> Optional[float]:
+        return self._get_info_value("currentPrice")
 
-    def calculate_payout_ratio(self):
-        """Retrieve the Payout Ratio from the info dictionary."""
-        return self.info.get("payoutRatio", None)
-
-    def get_beta(self):
-        """Retrieve the Beta (Volatility) from the info dictionary."""
-        return self.info.get("beta", None)
-
-    def get_institutional_ownership(self):
-        """Retrieve Institutional Ownership from the info dictionary."""
-        return self.info.get("heldPercentInstitutions", None)
-
-    def get_insider_transactions(self):
-        """Retrieve Insider Buying/Selling percentage from the info dictionary."""
-        return self.info.get("heldPercentInsiders", None)
-
-    def calculate_asset_turnover_ratio(self):
-        """Calculate the Asset Turnover Ratio using Total Assets and Revenue."""
-        total_assets = self._get_balance_sheet_value(["Total Assets"])
-        revenue = self.get_revenue()
-        if total_assets is None or revenue is None:
-            return None
-        return revenue / total_assets
-
-    def get_revenue(self):
-        """Retrieve Total Revenue from the financials."""
+    @handle_api_errors
+    def get_revenue(self) -> Optional[float]:
         return self._get_financials_value(["Total Revenue"])
 
-    def get_operating_income(self):
-        """Retrieve Operating Income from the financials."""
+    @handle_api_errors
+    def get_operating_income(self) -> Optional[float]:
         return self._get_financials_value(["Operating Income"])
 
-    def get_interest_expense(self):
-        """Retrieve Interest Expense from the financials."""
+    @handle_api_errors
+    def get_net_income(self) -> Optional[float]:
+        return self._get_financials_value(["Net Income"])
+
+    @handle_api_errors
+    def get_total_assets(self) -> Optional[float]:
+        return self._get_balance_sheet_value(["Total Assets"])
+
+    @handle_api_errors
+    def get_total_liabilities(self) -> Optional[float]:
+        return self._get_balance_sheet_value(
+            ["Total Liabilities Net Minority Interest", "Total Liabilities"]
+        )
+
+    @handle_api_errors
+    def get_total_equity(self) -> Optional[float]:
+        return self._get_balance_sheet_value(
+            ["Common Stock Equity", "Stockholders Equity"]
+        )
+
+    @handle_api_errors
+    def get_cogs(self) -> Optional[float]:
+        return self._get_financials_value(["Cost Of Revenue"])
+
+    @handle_api_errors
+    def get_interest_expense(self) -> Optional[float]:
         return self._get_financials_value(["Interest Expense"])
 
-    def get_rnd_expense(self):
-        """Retrieve Research & Development Expense from the financials."""
-        return self._get_financials_value(["Research Development"])
+    @handle_api_errors
+    def get_operating_cash_flow(self) -> Optional[float]:
+        return self._get_cashflow_value(["Operating Cash Flow"])
 
-    def calculate_effective_tax_rate(self):
-        """Calculate the Effective Tax Rate using Income Before Tax and Taxes Paid."""
-        income_before_tax = self._get_financials_value(["Income Before Tax"])
-        tax_paid = self._get_cashflow_value(["Tax Paid"])
-        if income_before_tax is None or tax_paid is None:
+    @handle_api_errors
+    def get_capital_expenditures(self) -> Optional[float]:
+        return self._get_cashflow_value(["Capital Expenditure"])
+
+    # Market Data
+    def get_beta(self) -> Optional[float]:
+        return self._get_info_value("beta")
+
+    def get_institutional_ownership(self) -> Optional[float]:
+        return self._get_info_value("heldPercentInstitutions")
+
+    def get_insider_transactions(self) -> Optional[float]:
+        return self._get_info_value("heldPercentInsiders")
+
+    # Profitability Metrics
+    @handle_api_errors
+    def calculate_margin(
+        self, numerator: Optional[float], denominator: Optional[float]
+    ) -> Optional[float]:
+        if not all([numerator is not None, denominator is not None, denominator != 0]):
             return None
-        return tax_paid / income_before_tax
+        return numerator / denominator
+
+    @handle_api_errors
+    def calculate_gross_margin(self) -> Optional[float]:
+        return self.calculate_margin(
+            self.get_revenue() - self.get_cogs(), self.get_revenue()
+        )
+
+    @handle_api_errors
+    def calculate_operating_margin(self) -> Optional[float]:
+        return self.calculate_margin(self.get_operating_income(), self.get_revenue())
+
+    @handle_api_errors
+    def calculate_net_profit_margin(self) -> Optional[float]:
+        return self.calculate_margin(self.get_net_income(), self.get_revenue())
+
+    @handle_api_errors
+    def calculate_roa(self) -> Optional[float]:
+        return self.calculate_margin(self.get_net_income(), self.get_total_assets())
+
+    @handle_api_errors
+    def calculate_roe(self) -> Optional[float]:
+        return self.calculate_margin(self.get_net_income(), self.get_total_equity())
+
+    @handle_api_errors
+    def calculate_roic(self) -> Optional[float]:
+        operating_income = self.get_operating_income()
+        total_equity = self.get_total_equity()
+        total_debt = self.get_total_liabilities()
+
+        if not all([operating_income, total_equity, total_debt]):
+            return None
+
+        tax_rate = self.calculate_effective_tax_rate() or 0.25
+        nopat = operating_income * (1 - tax_rate)
+        invested_capital = total_equity + total_debt
+
+        return self.calculate_margin(nopat, invested_capital)
+
+    # Leverage and Coverage Metrics
+    @handle_api_errors
+    def calculate_debt_to_equity(self) -> Optional[float]:
+        return self.calculate_margin(
+            self.get_total_liabilities(), self.get_total_equity()
+        )
+
+    @handle_api_errors
+    def calculate_interest_coverage(self) -> Optional[float]:
+        return self.calculate_margin(
+            self.get_operating_income(), self.get_interest_expense()
+        )
+
+    # Market Metrics
+    def calculate_pe_ratio(self) -> Optional[float]:
+        return self._get_info_value("trailingPE")
+
+    @handle_api_errors
+    def calculate_peg_ratio(self) -> Optional[float]:
+        return self.calculate_margin(
+            self._get_info_value("trailingPE"),
+            self._get_info_value("earningsQuarterlyGrowth"),
+        )
+
+    @handle_api_errors
+    def calculate_price_to_sales(self) -> Optional[float]:
+        return self.calculate_margin(
+            self._get_info_value("marketCap"), self.get_revenue()
+        )
+
+    def calculate_price_to_book(self) -> Optional[float]:
+        return self._get_info_value("priceToBook")
+
+    @handle_api_errors
+    def calculate_price_to_free_cash_flow(self) -> Optional[float]:
+        return self.calculate_margin(
+            self._get_info_value("marketCap"), self.calculate_free_cash_flow()
+        )
+
+    @handle_api_errors
+    def calculate_ev_to_ebitda(self) -> Optional[float]:
+        return self.calculate_margin(
+            self._get_info_value("enterpriseValue"),
+            self._get_financials_value(["EBITDA"]),
+        )
+
+    # Growth and Value Metrics
+    @handle_api_errors
+    def calculate_sustainable_growth_rate(self) -> Optional[float]:
+        return self.calculate_margin(
+            self.calculate_roe(),
+            1 - self._get_info_value("payoutRatio"),
+        )
+
+    @handle_api_errors
+    def calculate_altman_z_score(self) -> Optional[float]:
+        total_assets = self.get_total_assets()
+        if not total_assets:
+            return None
+
+        metrics = {
+            "working_capital": self._get_balance_sheet_value(["Working Capital"]),
+            "retained_earnings": self._get_balance_sheet_value(["Retained Earnings"]),
+            "operating_income": self.get_operating_income(),
+            "market_cap": self._get_info_value("marketCap"),
+            "total_liabilities": self.get_total_liabilities(),
+            "revenue": self.get_revenue(),
+        }
+
+        if not all(metrics.values()):
+            return None
+
+        coefficients = {
+            "working_capital": 1.2,
+            "retained_earnings": 1.4,
+            "operating_income": 3.3,
+            "market_cap": 0.6,
+            "revenue": 1.0,
+        }
+
+        z_score = sum(
+            coefficients[metric] * (value / total_assets)
+            for metric, value in metrics.items()
+            if metric != "total_liabilities"
+        )
+        z_score += (
+            coefficients["market_cap"]
+            * metrics["market_cap"]
+            / metrics["total_liabilities"]
+        )
+
+        return z_score
+
+    # Other Metrics
+    def calculate_dividend_yield(self) -> Optional[float]:
+        return self._get_info_value("dividendYield")
+
+    def calculate_payout_ratio(self) -> Optional[float]:
+        return self._get_info_value("payoutRatio")
+
+    @handle_api_errors
+    def calculate_asset_turnover_ratio(self) -> Optional[float]:
+        return self.calculate_margin(self.get_revenue(), self.get_total_assets())
+
+    @handle_api_errors
+    def calculate_free_cash_flow(self) -> Optional[float]:
+        operating_cash_flow = self.get_operating_cash_flow()
+        capital_expenditures = self.get_capital_expenditures()
+
+        if any(x is None for x in [operating_cash_flow, capital_expenditures]):
+            return None
+
+        return operating_cash_flow - capital_expenditures
+
+    @handle_api_errors
+    def calculate_effective_tax_rate(self) -> Optional[float]:
+        return self.calculate_margin(
+            self._get_cashflow_value(["Tax Paid"]),
+            self._get_financials_value(["Income Before Tax"]),
+        )

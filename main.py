@@ -14,28 +14,7 @@ def main():
     setup_logging()
 
     # List of stock tickers to analyze
-    tickers = [
-        "AAPL",
-        "ADBE",
-        "AMZN",
-        "BRK.B",
-        "COST",
-        "TGT",
-        "WMT",
-        "GOOGL",
-        "META",
-        "MSFT",
-        "NFLX",
-        "NVDA",
-        "TSLA",
-        "UBER",
-        "LYFT",
-        "TSM",
-        "INTC",
-        "DLTR",
-        "OLLI",
-        "DG",
-    ]
+    tickers = ["NVDA", "AAPL"]
 
     # Initialize the MultiStockAnalyzer with the tickers
     analyzer = MultiStockAnalyzer(tickers)
@@ -45,6 +24,8 @@ def main():
 
     # Print out the results
     print(results_df)
+
+    results_df.to_csv("stock_analysis.csv", index=False)
 
 
 if __name__ == "__main__":
