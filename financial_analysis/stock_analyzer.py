@@ -1,4 +1,5 @@
 from .metrics_calculator import MetricsCalculator
+from .risk_metrics_calculator import RiskMetricsCalculator
 import logging
 from typing import Dict, Any
 
@@ -7,6 +8,7 @@ class StockAnalyzer:
     def __init__(self, ticker: str, balance_sheet, financials, cashflow, info):
         self.ticker = ticker
         self.calculator = MetricsCalculator(balance_sheet, financials, cashflow, info)
+        self.risk_calculator = RiskMetricsCalculator(ticker)
 
     def get_metrics(self) -> Dict[str, Any]:
         """Calculate and return all metrics for a stock ticker."""
@@ -33,6 +35,7 @@ class StockAnalyzer:
                 # Market Metrics
                 "PE Ratio": self.calculator.calculate_pe_ratio(),
                 "PEG Ratio": self.calculator.calculate_peg_ratio(),
+                "Forward PE": self.calculator.calculate_forward_pe(),
                 "Price to Sales": self.calculator.calculate_price_to_sales(),
                 "Price to Book": self.calculator.calculate_price_to_book(),
                 "Price to Free Cash Flow": self.calculator.calculate_price_to_free_cash_flow(),
@@ -48,6 +51,15 @@ class StockAnalyzer:
                 "Institutional Ownership": self.calculator.get_institutional_ownership(),
                 "Insider Ownership": self.calculator.get_insider_transactions(),
             }
+
+            try:
+                print("Calculating Risk Metrics now")
+                risk_metrics = self.risk_calculator.calculate_risk_metrics()
+                metrics.update(risk_metrics)
+            except Exception as e:
+                logging.warning(
+                    f"Failed to calculate risk metrics for {self.ticker}: {e}"
+                )
 
             # Filter out None values and replace with "N/A"
             return {k: "N/A" if v is None else v for k, v in metrics.items()}

@@ -187,6 +187,12 @@ class MetricsCalculator:
         )
 
     @handle_api_errors
+    def calculate_forward_pe(self) -> Optional[float]:
+        return self.calculate_margin(
+            self._get_info_value("currentPrice"), self._get_info_value("forwardEps")
+        )
+
+    @handle_api_errors
     def calculate_price_to_sales(self) -> Optional[float]:
         return self.calculate_margin(
             self._get_info_value("marketCap"), self.get_revenue()

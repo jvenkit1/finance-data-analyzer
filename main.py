@@ -14,7 +14,22 @@ def main():
     setup_logging()
 
     # List of stock tickers to analyze
-    tickers = ["NVDA", "AAPL"]
+    tickers = [
+        "AAPL",
+        "ADBE",
+        "AMZN",
+        "BRK.B",
+        "COST",
+        "GOOG",
+        "INTC",
+        "META",
+        "MSFT",
+        "NFLX",
+        "NVDA",
+        "RIVN",
+        "TSM",
+        "UBER",
+    ]
 
     # Initialize the MultiStockAnalyzer with the tickers
     analyzer = MultiStockAnalyzer(tickers)
