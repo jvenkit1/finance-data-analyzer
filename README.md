@@ -2,7 +2,6 @@
 
 A comprehensive Python tool for analyzing stock market data, calculating financial metrics, and generating insights for multiple stocks simultaneously. This project leverages the Yahoo Finance API to fetch real-time market data and performs in-depth analysis using various financial metrics.
 
-
 ## Features
 This tool provides a wide range of financial metrics and analyses, including:
 
@@ -47,8 +46,8 @@ This tool provides a wide range of financial metrics and analyses, including:
 ### Clone the repository:
 
 ```
-git clone https://github.com/yourusername/stock-analysis-tool.git
-cd stock-analysis-tool
+git clone https://github.com/jvenkit1/finance-data-analyzer.git
+cd finance-data-analyzer
 ```
 
 ### Create a virtual environment (recommended):
